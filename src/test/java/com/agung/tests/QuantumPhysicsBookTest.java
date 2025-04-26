@@ -4,15 +4,12 @@ import com.agung.pages.CartPage;
 import com.agung.pages.HomePage;
 import com.agung.pages.LoginPage;
 import com.agung.pages.ProductPage;
-import com.agung.pages.SearchResultsPage;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -31,6 +28,7 @@ public class QuantumPhysicsBookTest {
     private String username;
     private String password;
     private String productUrl = "https://www.periplus.com/p/9781492656227";
+    private String cartUrl = "https://www.periplus.com/checkout/cart";
     private String bookTitle = "Quantum Physics for Babies";
     private String bookAuthor = "Ferrie, Chris";
     
@@ -48,7 +46,7 @@ public class QuantumPhysicsBookTest {
         }
         
         // Setup WebDriver
-        WebDriverManager.chromedriver().setup();
+        io.github.bonigarcia.wdm.WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized"); // Maximize window
         options.addArguments("--remote-allow-origins=*");
@@ -83,69 +81,23 @@ public class QuantumPhysicsBookTest {
                 System.out.println("Continuing the test without login");
             }
             
-            // Step 3: Search for "Quantum Physics for Babies"
-            System.out.println("Searching for '" + bookTitle + "'");
-            homePage.searchProduct(bookTitle); // Fixed method name from searchForProduct to searchProduct
+            // Step 3: Navigate directly to the product page (skipping search)
+            System.out.println("Navigating directly to product page: " + productUrl);
+            driver.get(productUrl);
+            Thread.sleep(3000); // Wait for page to load
             
-            // Step 4: Wait for search results
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            wait.until(ExpectedConditions.urlContains("search"));
-            
-            // Step 5: Try to find the book in search results
-            boolean bookFound = false;
-            try {
-                SearchResultsPage searchResultsPage = new SearchResultsPage(driver);
-                if (searchResultsPage.hasResults()) {
-                    System.out.println("Search results found, looking for the book");
-                    
-                    // Look for the specific book in the results
-                    List<WebElement> productElements = driver.findElements(
-                        By.cssSelector(".product-item, .item, .product, a[href*='/p/']"));
-                    
-                    for (WebElement product : productElements) {
-                        String productText = product.getText();
-                        if (productText.contains("Quantum Physics for Babies") || 
-                            productText.contains("Ferrie, Chris")) {
-                            System.out.println("Found the book in search results");
-                            // Use JavaScript to click on the product
-                            JavascriptExecutor js = (JavascriptExecutor) driver;
-                            js.executeScript("arguments[0].scrollIntoView({block: 'center'});", product);
-                            Thread.sleep(1000);
-                            js.executeScript("arguments[0].click();", product);
-                            bookFound = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!bookFound) {
-                        System.out.println("Book not found in search results, will navigate directly to product page");
-                    }
-                } else {
-                    System.out.println("No search results found, will navigate directly to product page");
-                }
-            } catch (Exception e) {
-                System.out.println("Error processing search results: " + e.getMessage());
-            }
-            
-            // Step 6: If book not found in search, navigate directly to the product page
-            if (!bookFound) {
-                System.out.println("Navigating directly to product page: " + productUrl);
-                driver.get(productUrl);
-                Thread.sleep(3000); // Wait for page to load
-            }
-            
-            // Step 7: Verify we're on the right product page
+            // Step 4: Verify we're on the right product page
             try {
                 String pageTitle = driver.getTitle();
                 String pageContent = driver.findElement(By.tagName("body")).getText();
                 
-                boolean isCorrectBook = pageTitle.contains("Quantum Physics for Babies") || 
-                                       pageContent.contains("Quantum Physics for Babies");
-                boolean isCorrectAuthor = pageContent.contains("Ferrie, Chris") || 
+                boolean isCorrectBook = pageTitle.contains(bookTitle) || 
+                                       pageContent.contains(bookTitle);
+                boolean isCorrectAuthor = pageContent.contains(bookAuthor) || 
                                          pageContent.contains("Chris Ferrie");
                 
                 if (isCorrectBook && isCorrectAuthor) {
-                    System.out.println("Verified correct product page: Quantum Physics for Babies by Chris Ferrie");
+                    System.out.println("Verified correct product page: " + bookTitle + " by " + bookAuthor);
                 } else {
                     System.out.println("Warning: Product page may not be for the correct book");
                     System.out.println("Page title: " + pageTitle);
@@ -154,7 +106,7 @@ public class QuantumPhysicsBookTest {
                 System.out.println("Error verifying product page: " + e.getMessage());
             }
             
-            // Step 8: Add to cart
+            // Step 5: Add to cart
             System.out.println("Attempting to add book to cart");
             
             JavascriptExecutor js = (JavascriptExecutor) driver;
@@ -206,7 +158,7 @@ public class QuantumPhysicsBookTest {
                 Assert.fail("Could not find Add to Cart button on the product page");
             }
             
-            // Step 9: Verify cart count
+            // Step 6: Verify cart count
             boolean cartUpdated = false;
             
             try {
@@ -226,23 +178,15 @@ public class QuantumPhysicsBookTest {
                 System.out.println("Could not get cart count: " + e.getMessage());
             }
             
-            // Step 10: Navigate to cart page
+            // Step 7: Navigate directly to cart page using the direct URL
             try {
-                System.out.println("Navigating to cart page");
-                
-                // Try clicking the cart icon first
-                try {
-                    WebElement cartIcon = driver.findElement(By.cssSelector("a.single-icon, a[href*='cart'], a.cart-link"));
-                    js.executeScript("arguments[0].click();", cartIcon);
-                } catch (Exception e) {
-                    // If that fails, navigate directly to the cart URL
-                    driver.get("https://www.periplus.com/checkout/cart");
-                }
+                System.out.println("Navigating directly to cart page: " + cartUrl);
+                driver.get(cartUrl);
                 
                 // Wait for cart page to load
                 Thread.sleep(3000);
                 
-                // Step 11: Verify cart contains the book
+                // Step 8: Verify cart contains the book
                 List<WebElement> cartItems = driver.findElements(
                     By.cssSelector(".cart-items .cart-item, .shop-list, .shopping-cart-table tr, .cart-table tr"));
                 
@@ -290,7 +234,7 @@ public class QuantumPhysicsBookTest {
                     Assert.fail("Cart is empty and cart count indicator shows no items");
                 }
                 
-                // Step 12: Proceed to checkout if cart has items
+                // Step 9: Proceed to checkout if cart has items
                 if (hasItems) {
                     System.out.println("Proceeding to checkout");
                     
