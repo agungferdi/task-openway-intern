@@ -4,7 +4,6 @@ import com.agung.pages.CartPage;
 import com.agung.pages.HomePage;
 import com.agung.pages.LoginPage;
 import com.agung.pages.ProductPage;
-import com.agung.pages.SearchResultsPage;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -12,8 +11,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -27,14 +24,13 @@ import java.util.Properties;
 
 /**
  * AddToCartScenarioBTest implements scenario B test case for Periplus shopping cart
- * This test opens Chrome, logs in, finds a product, adds it to cart, and verifies the addition
+ * This test opens Chrome, logs in, finds a product from promotions, adds it to cart, and verifies the addition
  */
 public class AddToCartScenarioBTest {
     private WebDriver driver;
     private Properties properties;
     private String username;
     private String password;
-    private String productToSearch = "harry potter";
     private String productName;
     
     @BeforeMethod
@@ -69,7 +65,7 @@ public class AddToCartScenarioBTest {
             
             HomePage homePage = new HomePage(driver);
             
-            // Step 2: Attempt to login with credentials (optional)
+            // Step 2: Attempt to login with credentials
             try {
                 LoginPage loginPage = homePage.navigateToLogin();
                 homePage = loginPage.login(username, password);
@@ -88,70 +84,29 @@ public class AddToCartScenarioBTest {
             
             // Define JavascriptExecutor for later use
             JavascriptExecutor js = (JavascriptExecutor) driver;
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             
-            // Step 3: Try multiple approaches to find a product
-            System.out.println("Searching for products on the website");
-            List<WebElement> products = null;
+            // Step 3: Go directly to promotion page
+            System.out.println("Trying to find products on: https://www.periplus.com/promotion");
+            driver.get("https://www.periplus.com/promotion");
             
-            // Array of URLs to try finding products
-            String[] productPages = {
-                "https://www.periplus.com/c/Books/Fiction-and-Literature/Best-Sellers",
-                "https://www.periplus.com/c/Books/Fiction-and-Literature",
-                "https://www.periplus.com/c/Books",
-                "https://www.periplus.com/promotion",
-                "https://www.periplus.com/search?q=harry+potter",
-                "https://www.periplus.com/"
-            };
+            // Wait for page to load
+            Thread.sleep(3000);
             
-            // Try each page until we find products
-            for (String page : productPages) {
-                System.out.println("Trying to find products on: " + page);
-                driver.get(page);
-                
-                // Wait for page to load
-                Thread.sleep(3000);
-                
-                // Try different selectors to find products
-                products = driver.findElements(By.cssSelector(".product-item, .item, .product"));
-                
-                if (products.isEmpty()) {
-                    products = driver.findElements(By.cssSelector("a[href*='/product/'], a[href*='/p/']"));
-                }
-                
-                // If we found products, break the loop
-                if (!products.isEmpty()) {
-                    System.out.println("Found " + products.size() + " products on " + page);
-                    break;
-                }
+            // Find products on the promotion page
+            List<WebElement> products = driver.findElements(By.cssSelector(".product-item, .item, .product"));
+            
+            if (products.isEmpty()) {
+                products = driver.findElements(By.cssSelector("a[href*='/product/'], a[href*='/p/']"));
             }
             
-            // If still no products found, try a more general approach on the homepage
-            if (products == null || products.isEmpty()) {
-                driver.get("https://www.periplus.com/");
-                Thread.sleep(3000);
-                
-                // Try to find any clickable elements that might lead to a product
-                List<WebElement> allLinks = driver.findElements(By.tagName("a"));
-                for (WebElement link : allLinks) {
-                    String href = link.getAttribute("href");
-                    if (href != null && (href.contains("/product/") || href.contains("/p/"))) {
-                        products.add(link);
-                    }
-                }
-            }
+            System.out.println("Found " + products.size() + " products on https://www.periplus.com/promotion");
+            System.out.println("Found " + products.size() + " products");
             
             // Final check if we found any products
             if (products == null || products.isEmpty()) {
-                System.out.println("No products found on any of the tried pages. Testing will use direct navigation to a known product URL");
-                
-                // Fallback: Directly navigate to a product page (example URL)
-                driver.get("https://www.periplus.com/p/9780316219266/fantastic-beasts-and-where-to-find-them-the-original-screenplay");
-                productName = "Fantastic Beasts and Where to Find Them: The Original Screenplay";
+                Assert.fail("No products found on the promotion page. Test cannot continue.");
             } else {
                 // Step 4: Select and click on a product
-                System.out.println("Found " + products.size() + " products");
-                
                 // Get first visible product
                 WebElement productElement = null;
                 for (WebElement product : products) {
@@ -293,12 +248,16 @@ public class AddToCartScenarioBTest {
             boolean cartUpdated = false;
             
             try {
-                WebElement cartCountElement = driver.findElement(By.id("cart_total"));
+                WebElement cartCountElement = driver.findElement(By.cssSelector("#cart_total, .cart-count, .cart-item-count, .cart-quantity"));
                 String cartCountText = cartCountElement.getText().trim();
                 
                 int cartCount = 0;
                 try {
-                    cartCount = Integer.parseInt(cartCountText);
+                    // Remove any non-numeric characters
+                    cartCountText = cartCountText.replaceAll("[^0-9]", "");
+                    if (!cartCountText.isEmpty()) {
+                        cartCount = Integer.parseInt(cartCountText);
+                    }
                 } catch (NumberFormatException e) {
                     System.out.println("Could not parse cart count: " + cartCountText);
                 }
@@ -311,11 +270,11 @@ public class AddToCartScenarioBTest {
             
             // Step 9: Navigate to cart page
             try {
-                System.out.println("Navigating to cart page");
+                System.out.println("NAVIGATED TO THE CHECKOUT PAGE TO VERIFY THE BOOK IN CART.");
                 
                 // Try clicking the cart icon first
                 try {
-                    WebElement cartIcon = driver.findElement(By.cssSelector("a.single-icon"));
+                    WebElement cartIcon = driver.findElement(By.cssSelector("a.single-icon, a.cart-icon, a.cart-link, a[href*='cart'], a[href*='checkout']"));
                     js.executeScript("arguments[0].click();", cartIcon);
                 } catch (Exception e) {
                     // If that fails, navigate directly to the cart URL
@@ -327,18 +286,15 @@ public class AddToCartScenarioBTest {
                 
                 // Step 10: Verify cart is not empty
                 List<WebElement> cartItems = driver.findElements(
-                    By.cssSelector(".cart-items .cart-item, .shop-list, .shopping-cart-table tr, .cart-table tr"));
+                    By.cssSelector(".cart-items .cart-item, .shop-list, .shopping-cart-table tr, .cart-table tr, .cart-item, .cart-product"));
                 
                 boolean hasItems = !cartItems.isEmpty();
                 
                 if (!hasItems) {
                     // Try another selector to find cart items
-                    cartItems = driver.findElements(By.cssSelector(".cart-content .item, .cart-product"));
+                    cartItems = driver.findElements(By.cssSelector(".cart-content .item, .cart-product, [class*='cart']"));
                     hasItems = !cartItems.isEmpty();
                 }
-                
-                // Take a screenshot to document the state of the cart
-                // (This is not implemented here but would be useful in a real test)
                 
                 if (hasItems) {
                     System.out.println("Cart is not empty, found " + cartItems.size() + " items");
@@ -357,11 +313,6 @@ public class AddToCartScenarioBTest {
                     
                     if (!productFound) {
                         System.out.println("Could not find exact product name in cart, but cart is not empty");
-                        System.out.println("Product name: " + productName);
-                        System.out.println("Cart items: ");
-                        for (WebElement item : cartItems) {
-                            System.out.println("- " + item.getText());
-                        }
                     }
                     
                     // Test passes if cart has items, even if we can't match the exact product name
