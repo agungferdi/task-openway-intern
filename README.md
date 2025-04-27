@@ -135,32 +135,12 @@ Terminal outputs from test execution:
 ![Test Log 3](images/log3.png)
 *Test verification and results*
 
-## Manual Test Cases
-The project also includes a comprehensive set of manual test cases for the Periplus shopping cart functionality, documented in the `ManualTestCases.md` file. These test cases cover various scenarios including:
-- Adding products to cart
-- Updating quantities
-- Price calculation verification
-- Product removal
-- Cart persistence across sessions
-- Stock limitation enforcement
-- Guest user cart functionality
-- Unavailable products handling
-- Discount code application
 
 ## Project Notes
 - The tests are designed to be resilient to UI changes and potential login issues
-- If login fails, the tests continue without login to test the guest checkout flow
 - The tests include extensive logging to assist with troubleshooting
 - Multiple element location strategies are used to handle potential site changes
 
-## Known Limitations
-- The site structure may change, requiring updates to selectors
-- Login functionality may be intermittent due to potential CAPTCHA or security measures
-- Test stability depends on the performance and response time of the Periplus website
 
-## Future Enhancements
-- Add more comprehensive test coverage for other shopping cart scenarios
-- Implement Allure reporting for better test result visualization
-- Add parallel test execution capabilities
-- Implement cross-browser testing
+
 
