@@ -7,13 +7,8 @@ import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
-/**
- * SearchResultsPage class represents the Periplus search results page
- * Contains methods to interact with search results
- */
 public class SearchResultsPage extends BasePage {
 
-    // More flexible selectors that can match various product list structures
     @FindBy(css = ".ProductList .product-item, .product-list .product-item, .product-grid .item")
     private List<WebElement> productItems;
 
@@ -27,19 +22,10 @@ public class SearchResultsPage extends BasePage {
         super(driver);
     }
 
-    /**
-     * Get number of products found in search results
-     * @return number of products
-     */
     public int getNumberOfProducts() {
         return productItems.size();
     }
 
-    /**
-     * Select a product by index
-     * @param index product index in list
-     * @return ProductPage instance
-     */
     public ProductPage selectProductByIndex(int index) {
         waitForPageToLoad();
         try {
@@ -52,14 +38,12 @@ public class SearchResultsPage extends BasePage {
                 waitForPageToLoad();
                 return new ProductPage(driver);
             } else if (!productItems.isEmpty()) {
-                // Fallback: If index is out of bounds but products exist, click the first one
                 System.out.println("Index out of bounds, selecting first product instead");
                 scrollIntoView(productLinks.get(0));
                 clickElement(productLinks.get(0));
                 waitForPageToLoad();
                 return new ProductPage(driver);
             } else {
-                // Fallback: Try a different selector if our main ones didn't work
                 System.out.println("No products found with primary selectors, trying alternative approach");
                 List<WebElement> alternativeProducts = driver.findElements(By.cssSelector("a[href*='/product/']"));
                 if (!alternativeProducts.isEmpty()) {
@@ -76,18 +60,10 @@ public class SearchResultsPage extends BasePage {
         }
     }
 
-    /**
-     * Select first product from search results
-     * @return ProductPage instance
-     */
     public ProductPage selectFirstProduct() {
         return selectProductByIndex(0);
     }
 
-    /**
-     * Check if any products were found
-     * @return true if products were found, false otherwise
-     */
     public boolean hasResults() {
         waitForPageToLoad();
         
@@ -95,7 +71,6 @@ public class SearchResultsPage extends BasePage {
             return true;
         }
         
-        // Fallback: Try alternative selectors
         try {
             List<WebElement> alternativeProducts = driver.findElements(By.cssSelector("a[href*='/product/']"));
             return !alternativeProducts.isEmpty();

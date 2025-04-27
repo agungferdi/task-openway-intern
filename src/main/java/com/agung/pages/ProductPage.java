@@ -4,10 +4,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
-/**
- * ProductPage class represents the Periplus product detail page
- * Contains methods to interact with product details and add to cart
- */
 public class ProductPage extends BasePage {
 
     @FindBy(css = ".product-title")
@@ -29,26 +25,14 @@ public class ProductPage extends BasePage {
         super(driver);
     }
     
-    /**
-     * Get product title
-     * @return product title text
-     */
     public String getProductTitle() {
         return getElementText(productTitle);
     }
     
-    /**
-     * Get product price
-     * @return product price text
-     */
     public String getProductPrice() {
         return getElementText(productPrice);
     }
     
-    /**
-     * Add product to cart
-     * @return ProductPage instance
-     */
     public ProductPage addToCart() {
         scrollIntoView(addToCartButton);
         clickElement(addToCartButton);
@@ -56,10 +40,6 @@ public class ProductPage extends BasePage {
         return this;
     }
     
-    /**
-     * Check if product was successfully added to cart
-     * @return true if success message is displayed, false otherwise
-     */
     public boolean isProductAddedToCart() {
         try {
             wait.until(d -> isElementDisplayed(cartSuccessMessage));
@@ -69,10 +49,6 @@ public class ProductPage extends BasePage {
         }
     }
     
-    /**
-     * Navigate to cart page
-     * @return CartPage instance
-     */
     public CartPage navigateToCart() {
         if (isElementDisplayed(viewCartButton)) {
             clickElement(viewCartButton);

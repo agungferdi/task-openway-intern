@@ -4,13 +4,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
-/**
- * LoginPage class represents the Periplus login page
- * Contains methods to handle login functionality
- */
 public class LoginPage extends BasePage {
 
-    // Using multiple selector options to increase reliability
     @FindBy(css = "input[type='email'], input[name='Email'], input.email")
     private WebElement emailField;
 
@@ -24,26 +19,16 @@ public class LoginPage extends BasePage {
         super(driver);
     }
 
-    /**
-     * Login to Periplus with provided credentials
-     * @param email user's email
-     * @param password user's password
-     * @return HomePage instance after login
-     */
     public HomePage login(String email, String password) {
         waitForPageToLoad();
         System.out.println("Attempting to login with email: " + email);
         
         try {
-            // Clear fields before sending keys
             emailField.clear();
             sendKeys(emailField, email);
             
             passwordField.clear();
             sendKeys(passwordField, password);
-            
-            // Take screenshot to debug any UI issues
-            // Implement screenshot if needed
             
             clickElement(loginButton);
             waitForPageToLoad();
